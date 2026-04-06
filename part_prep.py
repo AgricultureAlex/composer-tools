@@ -42,7 +42,7 @@ EXAMPLE_CONFIG = """\
 # To regenerate this file, delete it and run part_prep.py.
 
 --- directory ---
-.
+/Users/alexma/Library/Mobile Documents/com~apple~CloudDocs/0 Scores Post 2022/2026/Pelagic/0 Parts Finals
 
 --- composer ---
 Ma
@@ -63,11 +63,11 @@ Oboe
 Clarinet in B♭
 Soprano Saxophone
 Bassoon
-Percussion (Vibraphone)
+Vibraphone
 Harp
 Piano
-Violin I
-Violin II
+Violin 1
+Violin 2
 Viola
 Violoncello
 Double Bass
@@ -87,6 +87,19 @@ Double Bass
 #   =
 #   =
 #   Clarinet_in_Bb
+Flute
+Oboe
+Clarinet
+Soprano Saxophone
+Bassoon
+Vibraphone
+Harp
+Piano
+Violin_1
+Violin_2
+Viola
+Violoncello
+Contrabass
 """
 
 
