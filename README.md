@@ -1,3 +1,6 @@
+# For Composers
+Please watch the `Tutorial Video.mov` video demo.
+
 # Composer Tools
 
 Command-line utilities for preparing music parts for performance and distribution.
