@@ -61,7 +61,7 @@ Pelagic (Part) Cover Page.pdf
 18
 
 --- score_order ---
-# One instrument per line, in score order.
+# One instrument per line, in intended score order.
 # Flat and sharp symbols are not fully supported yet.
 Flute
 Oboe
@@ -78,19 +78,13 @@ Violoncello
 Double Bass
 
 --- search_strings ---
-# One per line, in the same order as score_order.txt.
+# One per line, in the same order as score_order above.
 # Use the text that uniquely identifies each part in the
-# ORIGINAL exported filename. If it matches the name in
-# score_order.txt exactly, you can write: =
+# ORIGINAL exported filename.
 #
-# Example (for a score_order.txt with Flute / Oboe / Clarinet in Bb):
+# Example (with Flute / Oboe / Clarinet in Bb):
 #   Flute
 #   Oboe
-#   Clarinet_in_Bb
-#
-# The = shorthand means "same as the score_order.txt name":
-#   =
-#   =
 #   Clarinet_in_Bb
 Flute
 Oboe
