@@ -9,25 +9,16 @@ Requirements:
     pip install pypdf reportlab
 
 Setup:
-    Place a file called score_order.txt in the same directory as your
-    part PDFs, listing one instrument per line in score order. E.g.:
+    Place a config file called part_prep_config.txt in your working
+    directory (option 5 generates an example). It includes all settings:
+    directory, composer, cover page, font, score order, and search strings.
 
-        Flute
-        Oboe
-        Clarinet in B♭
-
-    Lines starting with # and blank lines are ignored.
+    Alternatively, for interactive mode (options 1-3), place a
+    score_order.txt file in the part PDF directory listing one
+    instrument per line in score order.
 
 Usage:
     python part_prep.py
-
-You will be prompted to choose one of four actions:
-    1. Rename       — Rename exported PDFs into score order
-    2. Cover        — Prepend a cover-page PDF to each part
-    3. Stamp        — Add the part name (top-right, custom font) to page 1
-    4. All-in-one   — Run 1 → 2 → 3 in sequence
-
-Only the inputs relevant to your chosen action are collected.
 """
 
 import os
@@ -39,6 +30,114 @@ from pypdf import PdfReader, PdfWriter
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
+
+# ── config file ──────────────────────────────────────────────────────
+
+CONFIG_FILENAME = "part_prep_config.txt"
+
+EXAMPLE_CONFIG = """\
+# Part Preparation Tool — Config File
+# ====================================
+# Fill in the fields below. Lines starting with # are ignored.
+# To regenerate this file, delete it and run part_prep.py.
+
+--- directory ---
+.
+
+--- composer ---
+Ma
+
+--- cover_page ---
+Pelagic (Part) Cover Page.pdf
+
+--- font_path ---
+./Fonts/cardo/Cardo-Bold.ttf
+
+--- font_size ---
+18
+
+--- score_order ---
+# One instrument per line, in score order.
+Flute
+Oboe
+Clarinet in B♭
+Soprano Saxophone
+Bassoon
+Percussion (Vibraphone)
+Harp
+Piano
+Violin I
+Violin II
+Viola
+Violoncello
+Double Bass
+
+--- search_strings ---
+# One per line, in the same order as score_order.txt.
+# Use the text that uniquely identifies each part in the
+# ORIGINAL exported filename. If it matches the name in
+# score_order.txt exactly, you can write: =
+#
+# Example (for a score_order.txt with Flute / Oboe / Clarinet in Bb):
+#   Flute
+#   Oboe
+#   Clarinet_in_Bb
+#
+# The = shorthand means "same as the score_order.txt name":
+#   =
+#   =
+#   Clarinet_in_Bb
+"""
+
+
+def load_config(path):
+    """Parse a part_prep_config.txt file into a dict."""
+    with open(path, "r", encoding="utf-8") as f:
+        raw = f.read()
+
+    config = {}
+    # Split on --- field_name --- dividers
+    sections = re.split(r"^---\s*(.+?)\s*---\s*$", raw, flags=re.MULTILINE)
+    # sections = ['preamble', 'field1', 'content1', 'field2', 'content2', ...]
+    for i in range(1, len(sections) - 1, 2):
+        field = sections[i].strip()
+        lines = [
+            l.strip()
+            for l in sections[i + 1].strip().splitlines()
+            if l.strip() and not l.strip().startswith("#")
+        ]
+        if field in ("search_strings", "score_order"):
+            config[field] = lines  # keep as list
+        elif lines:
+            config[field] = lines[0]  # single value
+
+    return config
+
+
+def generate_example_config(directory):
+    """Write an example config file and exit."""
+    path = os.path.join(directory, CONFIG_FILENAME)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(EXAMPLE_CONFIG)
+    print(f"Generated example config: {path}")
+    print("Edit it with your settings, then run part_prep.py again.")
+
+
+def resolve_config(config, score_order):
+    """Expand search_strings '=' shorthand and build the full search list."""
+    raw_searches = config.get("search_strings", [])
+    search_strings = []
+    for i, name in enumerate(score_order):
+        order = i + 1
+        if i < len(raw_searches):
+            s = raw_searches[i]
+            if s == "=":
+                s = name
+        else:
+            s = name
+        search_strings.append((s, order, name))
+    return search_strings
+
 
 # ── helpers ──────────────────────────────────────────────────────────
 
@@ -75,16 +174,7 @@ def ask_composer():
 
 
 def load_score_order(directory):
-    """Load score order from score_order.txt in the given directory.
-
-    The file should list one instrument per line, e.g.:
-        Flute
-        Oboe
-        Clarinet in B♭
-        ...
-
-    Blank lines and lines starting with # are ignored.
-    """
+    """Load score order from score_order.txt in the given directory."""
     path = os.path.join(directory, "score_order.txt")
     if not os.path.exists(path):
         print(f"score_order.txt not found in {directory}")
@@ -113,9 +203,9 @@ def ask_search_strings(score_order):
     """For each instrument, ask what string to search for in the original filenames."""
     print("\nFor each instrument, enter the text that uniquely identifies it")
     print("in the ORIGINAL exported filename (e.g. Soprano_Saxophone, Violin_1).")
-    print("Press Enter to use the part name as-is. Type '/b' to go back.\n")
+    print("Press Enter to use the part name as-is. Type 'b' to go back.\n")
 
-    search_strings = []  # list of (search, order_num, part_name)
+    search_strings = []
     i = 0
     while i < len(score_order):
         name = score_order[i]
@@ -123,7 +213,7 @@ def ask_search_strings(score_order):
         default = search_strings[i][0] if i < len(search_strings) else name
         s = input(f'  {order:2d}. {name} → search for [Enter = "{default}"]: ').strip()
 
-        if s.lower() == "/b":
+        if s.lower() == "b":
             if i > 0:
                 i -= 1
                 print(f"      ↩ Back to {score_order[i]}")
@@ -201,11 +291,11 @@ def rename_parts(directory=None, composer=None, score_order=None, search_strings
 # ── 2. prepend cover ─────────────────────────────────────────────────
 
 
-def prepend_cover(directory=None):
+def prepend_cover(directory=None, cover_name=None):
     """Prepend a cover-page PDF to each numbered part file."""
     directory = directory or ask_directory()
-
-    cover_name = input("Cover page filename (e.g. Cover Page.pdf): ").strip()
+    if not cover_name:
+        cover_name = input("Cover page filename (e.g. Cover Page.pdf): ").strip()
     if not cover_name:
         print("No filename entered. Skipping cover prepend.")
         return False
@@ -256,7 +346,6 @@ def prepend_cover(directory=None):
 
 def _register_font(font_path):
     """Register a TTF font file and return its ReportLab name."""
-    # Derive a ReportLab name from the filename (e.g. "Cardo-Bold.ttf" -> "Cardo-Bold")
     font_name = os.path.splitext(os.path.basename(font_path))[0]
     try:
         pdfmetrics.getFont(font_name)
@@ -294,14 +383,19 @@ def _extract_part_name(filename):
     return match.group(1).strip() if match else None
 
 
-def stamp_part_names(directory=None):
+def stamp_part_names(directory=None, font_path=None, font_size=None):
     """Add the part name to the top-right of page 1 using a user-specified font."""
     directory = directory or ask_directory()
 
     # Font configuration
-    print("Font setup:")
-    font_path = input("  Path to .ttf font file [leave blank for Times-Bold]: ").strip()
+    if font_path is None:
+        print("Font setup:")
+        font_path = input(
+            "  Path to .ttf font file [leave blank for Times-Bold]: "
+        ).strip()
+
     if font_path:
+        font_path = os.path.expanduser(font_path)
         if not os.path.exists(font_path):
             print(f"  Font file not found: {font_path}")
             return False
@@ -311,8 +405,9 @@ def stamp_part_names(directory=None):
         font_name = "Times-Bold"
         print(f"  → Using built-in: {font_name}")
 
-    size_input = input("  Font size in pt [12]: ").strip()
-    font_size = int(size_input) if size_input else 12
+    if font_size is None:
+        size_input = input("  Font size in pt [12]: ").strip()
+        font_size = int(size_input) if size_input else 12
     print(f"  → Size: {font_size}pt\n")
 
     part_files = numbered_part_files(directory)
@@ -366,8 +461,8 @@ def stamp_part_names(directory=None):
 # ── 4. all-in-one ─────────────────────────────────────────────────────
 
 
-def all_in_one():
-    """Run rename → prepend cover → stamp part names in sequence."""
+def all_in_one_interactive():
+    """Run rename → prepend cover → stamp part names (interactive prompts)."""
     directory = ask_directory()
     composer = ask_composer()
     score_order = load_score_order(directory)
@@ -391,6 +486,55 @@ def all_in_one():
     print("=" * 60)
 
 
+def all_in_one_from_config(config):
+    """Run rename → prepend cover → stamp part names from config file."""
+    directory = config.get("directory", ".")
+    directory = os.path.expanduser(directory)
+    if not os.path.isdir(directory):
+        print(f"Directory not found: {directory}")
+        return
+
+    composer = config.get("composer", "").upper()
+    if not composer:
+        print("No composer specified in config. Exiting.")
+        return
+    print(f"Composer tag: {composer}")
+
+    score_order = config.get("score_order")
+    if score_order:
+        print(f"\nScore order from config ({len(score_order)} parts):\n")
+        for i, name in enumerate(score_order, 1):
+            print(f"    {i:2d}. {name}")
+    else:
+        score_order = load_score_order(directory)
+    search_strings = resolve_config(config, score_order)
+
+    cover_name = config.get("cover_page", "")
+    font_path = config.get("font_path", "")
+    font_size_str = config.get("font_size", "12")
+    font_size = int(font_size_str) if font_size_str else 12
+
+    print("\n── Step 1/3: Rename ──\n")
+    if not rename_parts(directory, composer, score_order, search_strings):
+        if not confirm("Rename did not complete. Continue anyway? (y/n): "):
+            return
+
+    print("\n── Step 2/3: Prepend Cover Page ──\n")
+    if cover_name:
+        if not prepend_cover(directory, cover_name):
+            if not confirm("Cover prepend did not complete. Continue anyway? (y/n): "):
+                return
+    else:
+        print("No cover_page in config. Skipping.")
+
+    print("\n── Step 3/3: Stamp Part Names ──\n")
+    stamp_part_names(directory, font_path, font_size)
+
+    print("\n" + "=" * 60)
+    print("  All done!")
+    print("=" * 60)
+
+
 # ── main menu ─────────────────────────────────────────────────────────
 
 
@@ -403,10 +547,29 @@ def main():
     print("  2. Prepend a cover page to each part")
     print("  3. Stamp part names on page 1 (top-right, custom font)")
     print("  4. All of the above (1 → 2 → 3)")
+    print("  5. Generate example config file")
     print()
 
-    choice = input("Choose [1/2/3/4]: ").strip()
+    choice = input("Choose [1/2/3/4/5]: ").strip()
     print()
+
+    if choice == "5":
+        directory = input("Directory for config file [.]: ").strip() or "."
+        generate_example_config(directory)
+        return
+
+    # Check for config file in current directory
+    config = None
+    if choice == "4":
+        # Look for config in . first, then ask
+        for candidate in [".", os.getcwd()]:
+            cfg_path = os.path.join(candidate, CONFIG_FILENAME)
+            if os.path.exists(cfg_path):
+                print(f"Found config: {cfg_path}")
+                if confirm("Use this config file? (y/n): "):
+                    config = load_config(cfg_path)
+                    print(f"  Loaded {len(config)} fields from config.\n")
+                break
 
     if choice == "1":
         rename_parts()
@@ -415,7 +578,10 @@ def main():
     elif choice == "3":
         stamp_part_names()
     elif choice == "4":
-        all_in_one()
+        if config:
+            all_in_one_from_config(config)
+        else:
+            all_in_one_interactive()
     else:
         print("Invalid choice.")
 

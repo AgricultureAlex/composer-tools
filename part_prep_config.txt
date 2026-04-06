@@ -1,0 +1,64 @@
+# Part Preparation Tool — Config File
+# ====================================
+# Fill in the fields below. Lines starting with # are ignored.
+# To regenerate this file, delete it and run part_prep.py.
+
+--- directory ---
+/Users/alexma/Library/Mobile Documents/com~apple~CloudDocs/0 Scores Post 2022/2026/Pelagic/0 Parts Finals
+
+--- composer ---
+Ma
+
+--- cover_page ---
+Pelagic (Part) Cover Page.pdf
+
+--- font_path ---
+./Fonts/cardo/Cardo-Bold.ttf
+
+--- font_size ---
+18
+
+--- score_order ---
+# One instrument per line, in score order.
+Flute
+Oboe
+Clarinet in B♭
+Soprano Saxophone
+Bassoon
+Vibraphone
+Harp
+Piano
+Violin 1
+Violin 2
+Viola
+Violoncello
+Double Bass
+
+--- search_strings ---
+# One per line, in the same order as score_order.txt.
+# Use the text that uniquely identifies each part in the
+# ORIGINAL exported filename. If it matches the name in
+# score_order.txt exactly, you can write: =
+#
+# Example (for a score_order.txt with Flute / Oboe / Clarinet in Bb):
+#   Flute
+#   Oboe
+#   Clarinet_in_Bb
+#
+# The = shorthand means "same as the score_order.txt name":
+#   =
+#   =
+#   Clarinet_in_Bb
+Flute
+Oboe
+Clarinet
+Soprano Saxophone
+Bassoon
+Vibraphone
+Harp
+Piano
+Violin_1
+Violin_2
+Viola
+Violoncello
+Contrabass
