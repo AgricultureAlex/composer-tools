@@ -1,5 +1,5 @@
 # For Composers
-Please watch the [`Tutorial Video.mov` video demo](https://youtu.be/V1YE16QsdD8).
+Please watch the [`Tutorial Video.mp4` video demo](https://youtu.be/7cNrmuOes8E).
 
 # Composer Tools
 
