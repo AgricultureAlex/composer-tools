@@ -43,4 +43,3 @@ No files are deleted. Renames use `os.rename`; cover prepend and stamping overwr
 ## License
 
 MIT
-# composer-tools
