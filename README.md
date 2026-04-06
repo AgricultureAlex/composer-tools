@@ -25,7 +25,6 @@ pip install pypdf reportlab
 ```
 
 ## Usage
-
 ```
 python part_prep.py
 ```
