@@ -4,22 +4,27 @@
 # To regenerate this file, delete it and run part_prep.py.
 
 --- directory ---
-/Users/alexma/Library/Mobile Documents/com~apple~CloudDocs/0 Scores Post 2022/2026/Pelagic/0 Parts Finals
+# If you export to the folder containing this python and config file, you don't need to change this.
+.
 
 --- composer ---
 Ma
 
 --- cover_page ---
+# If you put the cover page in this directory, you can simply name this the name of your file.
 Pelagic (Part) Cover Page.pdf
 
 --- font_path ---
+# If you're OK with boldface Cardo, you can leave this unchanged.
 ./Fonts/cardo/Cardo-Bold.ttf
 
 --- font_size ---
+# If you're OK with font size 18, you can leave this unchanged.
 18
 
 --- score_order ---
 # One instrument per line, in score order.
+# Flat and sharp symbols are not fully supported yet.
 Flute
 Oboe
 Clarinet in B♭
@@ -52,7 +57,7 @@ Double Bass
 Flute
 Oboe
 Clarinet
-Soprano Saxophone
+Soprano_Saxophone
 Bassoon
 Vibraphone
 Harp
