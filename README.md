@@ -28,7 +28,7 @@ A `.ttf` font file is needed for the stamp step if you want characters like ♭ 
 
 ## Quick Start
 
-1. Export your parts from your notation program into a folder.
+1. Export your parts from your notation program into a folder. Or, use the provided example files from _Pelagic_.
 
 2. Generate a config file:
 
@@ -39,7 +39,7 @@ python part_prep.py
 
 This creates `part_prep_config.txt` in the directory you specify.
 
-3. Edit `part_prep_config.txt`. It looks like this:
+3. Edit `part_prep_config.txt`.Or, for the example files, everything is already good to go. You can change things several times and experiment to see what pages you'll get by copying over fresh copies from the `example_backups` folder. The default (_Pelagic_) config file looks like this:
 
 ```
 # Part Preparation Tool — Config File
@@ -48,22 +48,27 @@ This creates `part_prep_config.txt` in the directory you specify.
 # To regenerate this file, delete it and run part_prep.py.
 
 --- directory ---
-/Users/alexma/Library/Mobile Documents/com~apple~CloudDocs/0 Scores Post 2022/2026/Pelagic/0 Parts Finals
+# If you export to the folder containing this python and config file, you don't need to change this.
+.
 
 --- composer ---
 Ma
 
 --- cover_page ---
+# If you put the cover page in this directory, you can simply name this the name of your file.
 Pelagic (Part) Cover Page.pdf
 
 --- font_path ---
-./Fonts/cardo/Cardo-Bold.ttf
+# If you're OK with boldface Cardo, you can leave this unchanged.
+./fonts/cardo/Cardo-Bold.ttf
 
 --- font_size ---
+# If you're OK with font size 18, you can leave this unchanged.
 18
 
 --- score_order ---
 # One instrument per line, in score order.
+# Flat and sharp symbols are not fully supported yet.
 Flute
 Oboe
 Clarinet in B♭
@@ -81,22 +86,16 @@ Double Bass
 --- search_strings ---
 # One per line, in the same order as score_order.txt.
 # Use the text that uniquely identifies each part in the
-# ORIGINAL exported filename. If it matches the name in
-# score_order.txt exactly, you can write: =
+# ORIGINAL exported filename.
 #
-# Example (for a score_order.txt with Flute / Oboe / Clarinet in Bb):
+# Example (with Flute / Oboe / Clarinet in Bb):
 #   Flute
 #   Oboe
-#   Clarinet_in_Bb
-#
-# The = shorthand means "same as the score_order.txt name":
-#   =
-#   =
 #   Clarinet_in_Bb
 Flute
 Oboe
 Clarinet
-Soprano Saxophone
+Soprano_Saxophone
 Bassoon
 Vibraphone
 Harp

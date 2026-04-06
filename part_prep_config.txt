@@ -16,7 +16,7 @@ Pelagic (Part) Cover Page.pdf
 
 --- font_path ---
 # If you're OK with boldface Cardo, you can leave this unchanged.
-./Fonts/cardo/Cardo-Bold.ttf
+./fonts/cardo/Cardo-Bold.ttf
 
 --- font_size ---
 # If you're OK with font size 18, you can leave this unchanged.
