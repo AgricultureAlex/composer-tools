@@ -502,12 +502,16 @@ def prepend_cover(
     blank_pages_after_cover=0,
     search_strings=None,
     cwd=None,
+    blank_page_name=None,
 ):
     """Prepend a cover-page PDF to each numbered part file, then optional blank pages.
 
     Cover and blank-page PDFs are resolved relative to *cwd* (the current working
     directory), not the parts directory. Per-part blank page counts (from
     search_strings) override the global default.
+
+    If *blank_page_name* is provided and the file exists, blank pages are copies of
+    that PDF's first page. Otherwise a procedural blank page is used as a fallback.
     """
     if cwd is None:
         cwd = os.getcwd()
@@ -538,6 +542,20 @@ def prepend_cover(
     cover_reader = PdfReader(cover_path)
     print(f"Cover PDF has {len(cover_reader.pages)} page(s).")
     print(f"Global blank pages after cover: {blank_pages_after_cover}\n")
+
+    # Resolve blank page PDF (if provided)
+    blank_page_reader = None
+    if blank_page_name:
+        if os.path.isabs(blank_page_name):
+            blank_page_path = blank_page_name
+        else:
+            blank_page_path = os.path.normpath(os.path.join(cwd, blank_page_name))
+        if os.path.exists(blank_page_path):
+            blank_page_reader = PdfReader(blank_page_path)
+            print(f"Blank page PDF: {blank_page_path}")
+        else:
+            pass
+            # print(f"  Warning: blank_page file not found ({blank_page_path}); falling back to procedural blank.")
 
     # Build a lookup from filename → per-part extra blank pages
     per_part_blanks = {}
@@ -582,11 +600,21 @@ def prepend_cover(
         prefix = filename[:3]
         blanks = per_part_blanks.get(prefix, blank_pages_after_cover)
         if blanks > 0:
-            ref = cover_reader.pages[-1] if cover_reader.pages else part_reader.pages[0]
-            blank_w = float(ref.mediabox.width)
-            blank_h = float(ref.mediabox.height)
-            for _ in range(blanks):
-                writer.add_blank_page(blank_w, blank_h)
+            if blank_page_reader is not None:
+                # Use the first page of the blank_page PDF for each blank slot
+                for _ in range(blanks):
+                    writer.add_page(blank_page_reader.pages[0])
+            else:
+                # Fallback: procedural blank sized to match the cover's last page
+                ref = (
+                    cover_reader.pages[-1]
+                    if cover_reader.pages
+                    else part_reader.pages[0]
+                )
+                blank_w = float(ref.mediabox.width)
+                blank_h = float(ref.mediabox.height)
+                for _ in range(blanks):
+                    writer.add_blank_page(blank_w, blank_h)
 
         for page in part_reader.pages:
             writer.add_page(page)
@@ -776,11 +804,16 @@ def all_in_one_interactive():
     print("\n── Step 2/3: Prepend Cover Page ──\n")
     blank_input = input("Global blank pages after cover [0]: ").strip()
     blank_pages_after_cover = int(blank_input) if blank_input else 0
+    blank_page_name = (
+        input("Blank page PDF path (leave blank for procedural blank): ").strip()
+        or None
+    )
     if not prepend_cover(
         output_dir,
         blank_pages_after_cover=blank_pages_after_cover,
         search_strings=search_strings,
         cwd=cwd,
+        blank_page_name=blank_page_name,
     ):
         if not confirm("Cover prepend did not complete. Continue anyway? (y/n): "):
             return
@@ -830,6 +863,7 @@ def all_in_one_from_config(config, cwd=None):
     cover_name = config.get("cover_page", "")
     blank_pages_str = config.get("blank_pages_after_cover", "0")
     blank_pages_after_cover = int(blank_pages_str) if blank_pages_str else 0
+    blank_page_name = config.get("blank_page", "") or None
     font_path = config.get("font_path", "")
     font_size_str = config.get("font_size", "12")
     font_size = int(font_size_str) if font_size_str else 12
@@ -842,7 +876,12 @@ def all_in_one_from_config(config, cwd=None):
     print("\n── Step 2/3: Prepend Cover Page ──\n")
     if cover_name:
         if not prepend_cover(
-            output_dir, cover_name, blank_pages_after_cover, search_strings, cwd=cwd
+            output_dir,
+            cover_name,
+            blank_pages_after_cover,
+            search_strings,
+            cwd=cwd,
+            blank_page_name=blank_page_name,
         ):
             if not confirm("Cover prepend did not complete. Continue anyway? (y/n): "):
                 return
