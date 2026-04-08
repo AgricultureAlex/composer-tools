@@ -8,22 +8,22 @@
 ./your_parts_here
 
 --- composer ---
-Ma
+Loring
 
 --- cover_page ---
 ./your_front_matter_here/Pelagic (Part) Cover Page.pdf
 
 --- blank_pages_after_cover ---
 # Number of blank pages to insert after the cover and before the part.
-# This is the global default; per-part overrides go in search_strings below.
-# Default: 0
+# This is to set the DEFAULT; per-part overrides go in search_strings below.
 0
 
 --- blank_page ---
-./your_front_matter_here/Pelagic (Part) Cover Page.pdf
+./your_front_matter_here/letter_blank_page.pdf
 
 --- font_path ---
 # If you're OK with boldface Cardo, you can leave this unchanged.
+# It can be either a TTF or an OTF.
 ./fonts/cardo/Cardo-Bold.ttf
 
 --- font_size ---

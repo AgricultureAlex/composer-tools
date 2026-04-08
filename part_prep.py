@@ -70,15 +70,15 @@ Ma
 
 --- blank_pages_after_cover ---
 # Number of blank pages to insert after the cover and before the part.
-# This is the global default; per-part overrides go in search_strings below.
-# Default: 0
+# This is to set the DEFAULT; per-part overrides go in search_strings below.
 0
 
 --- blank_page ---
-./your_front_matter_here/Pelagic (Part) Cover Page.pdf
+./your_front_matter_here/letter_blank_page.pdf
 
 --- font_path ---
 # If you're OK with boldface Cardo, you can leave this unchanged.
+# It can be either a TTF or an OTF.
 ./fonts/cardo/Cardo-Bold.ttf
 
 --- font_size ---
@@ -87,7 +87,7 @@ Ma
 
 --- search_strings ---
 # One mapping per line. The order of lines here defines the output score order (!!!).
-# Format:
+# Allowable formats:
 #   input -> file_name / stamp_name + extra_blank_pages
 #   input -> stamp_name + extra_blank_pages
 #   input -> stamp_name
@@ -137,10 +137,6 @@ _accidental_font_name = None
 
 
 def _ensure_accidental_font():
-    """Register the first available accidental fallback font and return its name.
-
-    Returns None if no fallback font could be loaded.
-    """
     global _accidental_font_name
     if _accidental_font_name is not None:
         return _accidental_font_name
@@ -149,12 +145,8 @@ def _ensure_accidental_font():
         expanded = os.path.expanduser(path)
         if not os.path.exists(expanded):
             continue
-        font_name = os.path.splitext(os.path.basename(expanded))[0]
         try:
-            try:
-                pdfmetrics.getFont(font_name)
-            except KeyError:
-                pdfmetrics.registerFont(TTFont(font_name, expanded))
+            font_name = _register_font(expanded)
             _accidental_font_name = font_name
             print(f"  → Accidental fallback font: {font_name}")
             return font_name
@@ -421,7 +413,7 @@ def make_output_dir(composer, cwd=None):
 
     The directory is created in *cwd* (defaults to the current working directory).
     """
-    # TODO: When directly naming the folder to composer
+    # TODO: When directly naming the folder to composer, change the output folder name
     if cwd is None:
         cwd = os.getcwd()
     output_name = "outputs_go_here"
@@ -631,13 +623,48 @@ def prepend_cover(
 
 
 def _register_font(font_path):
-    """Register a TTF font file and return its ReportLab name."""
+    """Register a font file and return its ReportLab name.
+
+    Handles real TrueType (.ttf with glyf outlines) directly. For CFF-flavored
+    fonts (.otf, or .ttf files that are actually CFF in disguise), converts to
+    TrueType in memory using fontTools + afdko.
+    """
     font_name = os.path.splitext(os.path.basename(font_path))[0]
     try:
         pdfmetrics.getFont(font_name)
+        return font_name
     except KeyError:
+        pass
+
+    try:
         pdfmetrics.registerFont(TTFont(font_name, font_path))
-    return font_name
+        return font_name
+    except Exception as e:
+        # Likely CFF outlines. Try converting on the fly.
+        msg = str(e).lower()
+        if "postscript" not in msg and "cff" not in msg:
+            # Some other failure — re-raise so we don't mask real bugs.
+            raise
+
+        try:
+            from afdko.otf2ttf import otf_to_ttf
+            from fontTools.ttLib import TTFont as FTFont
+        except ImportError as imp_err:
+            raise RuntimeError(
+                f"Font {font_path} has PostScript/CFF outlines and needs "
+                f"conversion. Install the converter with:\n"
+                f"    pip install fonttools afdko\n"
+                f"(original error: {imp_err})"
+            )
+
+        print(f"  → Converting CFF outlines to TrueType in memory: {font_path}")
+        ft = FTFont(font_path)
+        otf_to_ttf(ft)
+        buf = BytesIO()
+        ft.save(buf)
+        buf.seek(0)
+        pdfmetrics.registerFont(TTFont(font_name, buf))
+        return font_name
 
 
 def _create_text_overlay(
@@ -657,7 +684,9 @@ def _create_text_overlay(
     # TODO: Change this when finally implementing accidentals support.
     # It should read
     # segments = _split_text_for_fonts(text, font_name)
-    segments = [(text, font_name)]
+    # Or, if not using split text (if it's still broken), use
+    # segments = [(text, font_name)]
+    segments = _split_text_for_fonts(text, font_name)
 
     # Calculate total width across all segments so we can right-align the block.
     total_width = 0.0
