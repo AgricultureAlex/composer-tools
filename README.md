@@ -29,12 +29,11 @@ pip install pypdf reportlab
 
 A font file is needed for the stamp step if you want characters like ♭ or ♯ (the built-in Times-Bold doesn't support them). [Cardo](https://fonts.google.com/specimen/Cardo) is bundled in this repo and is the default in the example config.
 
-**Accidental fallback fonts.** Because most text fonts (including Cardo) don't include ♭ and ♯ glyphs, the script automatically falls back to a music-friendly font for those characters. It looks for Edwin or Leland under `./fonts/` by default — both are bundled. If your font file has CFF/PostScript outlines (most `.otf` files, and some `.ttf` files in disguise), you'll need to convert it to a real TrueType file first:
+**Accidental fallback fonts.** Because most text fonts (including Cardo) don't include ♭ and ♯ glyphs, the script automatically falls back to a music-friendly font for those characters. It looks for Edwin or Leland under `./fonts/` by default — both are bundled. If you want to use your own font, move the downloaded folder/file to `./fonts` and run the following
 
 ```
 pip install afdko
-otf2ttf fonts/Leland/Leland.otf
-otf2ttf fonts/Edwin/Edwin-Roman.otf
+otf2ttf fonts/YourFont/YourFontFile.otf
 ```
 
 ReportLab's font loader only handles real TrueType outlines, so this one-time conversion is required for any CFF-flavored font.
@@ -174,7 +173,7 @@ python part_prep.py
 
 It runs copy/rename → cover → stamp in sequence, confirming before each step. Output files land in `outputs_go_here/` next to the script.
 
-## Interactive Mode
+## Interactive Mode - NO LONGER SUPPORTED
 
 Options 1–3 run individual steps with interactive prompts instead of the config file. These use a separate `score_order.txt` file (one instrument per line) placed in the parts directory.
 

@@ -79,7 +79,7 @@ Ma
 --- font_path ---
 # If you're OK with boldface Cardo, you can leave this unchanged.
 # It can be either a TTF or an OTF.
-./fonts/cardo/Cardo-Bold.ttf
+./resources/fonts/cardo/Cardo-Bold.ttf
 
 --- font_size ---
 # If you're OK with font size 18, you can leave this unchanged.
